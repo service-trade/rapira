@@ -3,8 +3,12 @@ from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
 
+from pyramid.security import (Allow, Everyone,)
+
 class WikiStore(PersistentMapping):
     __parent__ = __name__ = None
+    __acl__ = [(Allow, Everyone, 'view'),
+               (Allow, 'group:editors', 'edit')]
 
 
 class WikiPage(Persistent):

@@ -4,7 +4,44 @@ import re
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 
+from pyramid.view import (view_config, forbidden_view_config,)
+from pyramid.security import (remember, forget, authenticated_userid,)
+
+from .security import USERS
 from .models import WikiPage
+
+@view_config(context='.models.WikiStore', name='login', renderer='templates/login.pt')
+@forbidden_view_config(renderer='templates/login.pt')
+def login(request):
+    login_url = request.resource_url(request.context, 'login')
+    referrer = request.url
+    if referrer == login_url:
+        referrer = '/' # never use the login form itself as came_from
+    came_from = request.params.get('came_from', referrer)
+    message = ''
+    login = ''
+    password = ''
+    if 'form.submitted' in request.params:
+        login = request.params['login']
+        password = request.params['password']
+        if USERS.get(login) == password:
+            headers = remember(request, login)
+            return HTTPFound(location = came_from,
+                             headers = headers)
+        message = 'Failed login'
+
+    return dict(
+        message = message,
+        url = request.application_url + '/login',
+        came_from = came_from,
+        login = login,
+        password = password,
+        )
+
+@view_config(context='.models.WikiStore', name='logout')
+def logout(request):
+    headers = forget(request)
+    return HTTPFound(location = request.resource_url(request.context), headers = headers)
 
 # regular expression used to find WikiWords
 wikiwords = re.compile(r"\b([A-Z]\w+[A-Z]+\w+)")
@@ -13,7 +50,7 @@ wikiwords = re.compile(r"\b([A-Z]\w+[A-Z]+\w+)")
 def view_wiki(context, request):
     return HTTPFound(location=request.resource_url(context, 'FrontPage'))
 
-@view_config(context='.models.WikiPage', renderer='templates/view.pt')
+@view_config(context='.models.WikiPage', renderer='templates/view.pt', permission='view')
 def view_wiki_page(context, request):
     wiki = context.__parent__
 
@@ -30,10 +67,9 @@ def view_wiki_page(context, request):
     content = publish_parts(context.data, writer_name='html')['html_body']
     content = wikiwords.sub(check, content)
     edit_url = request.resource_url(context, 'edit_page')
-    return dict(page = context, content = content, edit_url = edit_url)
+    return dict(page = context, content = content, edit_url = edit_url, logged_in = authenticated_userid(request))
 
-@view_config(name='add_page', context='.models.WikiStore',
-             renderer='templates/edit.pt')
+@view_config(name='add_page', context='.models.WikiStore', renderer='templates/edit.pt', permission='edit')
 def add_page(context, request):
     pagename = request.subpath[0]
     if 'form.submitted' in request.params:
@@ -47,14 +83,15 @@ def add_page(context, request):
     page = WikiPage('')
     page.__name__ = pagename
     page.__parent__ = context
-    return dict(page = page, save_url = save_url)
+    return dict(page = page, save_url = save_url, logged_in = authenticated_userid(request))
 
 @view_config(name='edit_page', context='.models.WikiPage',
-             renderer='templates/edit.pt')
+             renderer='templates/edit.pt', permission='edit')
 def edit_page(context, request):
     if 'form.submitted' in request.params:
         context.data = request.params['body']
         return HTTPFound(location = request.resource_url(context))
 
     return dict(page=context,
-                save_url=request.resource_url(context, 'edit_page'))
+                save_url=request.resource_url(context, 'edit_page'),
+                logged_in = authenticated_userid(request))
