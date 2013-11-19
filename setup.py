@@ -3,7 +3,7 @@ import os
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(here, 'README.txt')).read()
+README = open(os.path.join(here, 'README.md')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
@@ -14,6 +14,8 @@ requires = [
     'pyramid_debugtoolbar',
     'ZODB3',
     'waitress',
+    'pyramid_jinja2',
+    'docutils'
     ]
 
 setup(name='rapira',
