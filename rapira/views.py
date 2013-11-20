@@ -10,7 +10,7 @@ from pyramid.security import (remember, forget, authenticated_userid,)
 from .security import USERS
 from .models import WikiPage
 
-@view_config(context='.models.WikiStore', name='login', renderer='templates/login.pt')
+@view_config(context='.models.AppDataStore', name='login', renderer='templates/login.pt')
 @forbidden_view_config(renderer='templates/login.pt')
 def login(request):
     login_url = request.resource_url(request.context, 'login')
@@ -38,17 +38,21 @@ def login(request):
         password = password,
         )
 
-@view_config(context='.models.WikiStore', name='logout')
+@view_config(context='.models.AppDataStore', name='logout')
 def logout(request):
     headers = forget(request)
     return HTTPFound(location = request.resource_url(request.context), headers = headers)
 
+@view_config(context='.models.AppDataStore')
+def view_wiki(context, request):
+    return HTTPFound(location=request.resource_url(context, 'wiki'))
+
 # regular expression used to find WikiWords
 wikiwords = re.compile(r"\b([A-Z]\w+[A-Z]+\w+)")
 
-@view_config(context='.models.WikiStore')
+@view_config(context='.models.WikiContainer')
 def view_wiki(context, request):
-    return HTTPFound(location=request.resource_url(context, 'FrontPage'))
+    return HTTPFound(location=request.resource_url(context, 'frontpage'))
 
 @view_config(context='.models.WikiPage', renderer='templates/rapira/view.jinja2', permission='view')
 def view_wiki_page(context, request):
@@ -69,7 +73,7 @@ def view_wiki_page(context, request):
     edit_url = request.resource_url(context, 'edit_page')
     return dict(page = context, content = content, edit_url = edit_url, logged_in = authenticated_userid(request))
 
-@view_config(name='add_page', context='.models.WikiStore', renderer='templates/edit.pt', permission='edit')
+@view_config(name='add_page', context='.models.WikiContainer', renderer='templates/edit.pt', permission='edit')
 def add_page(context, request):
     pagename = request.subpath[0]
     if 'form.submitted' in request.params:
