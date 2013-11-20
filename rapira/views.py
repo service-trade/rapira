@@ -50,7 +50,7 @@ wikiwords = re.compile(r"\b([A-Z]\w+[A-Z]+\w+)")
 def view_wiki(context, request):
     return HTTPFound(location=request.resource_url(context, 'FrontPage'))
 
-@view_config(context='.models.WikiPage', renderer='templates/view.pt', permission='view')
+@view_config(context='.models.WikiPage', renderer='templates/rapira/view.jinja2', permission='view')
 def view_wiki_page(context, request):
     wiki = context.__parent__
 
