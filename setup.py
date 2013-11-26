@@ -8,11 +8,11 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
     'pyramid',
-    'pyramid_zodbconn',
+    'SQLAlchemy',
     'transaction',
     'pyramid_tm',
     'pyramid_debugtoolbar',
-    'ZODB3',
+    'zope.sqlalchemy',
     'waitress',
     'pyramid_jinja2',
     'docutils'
@@ -31,15 +31,15 @@ setup(name='rapira',
       author='',
       author_email='',
       url='',
-      keywords='web pylons pyramid',
+      keywords='web wsgi bfg pylons pyramid',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
-      tests_require=requires,
-      test_suite="rapira",
       entry_points="""\
       [paste.app_factory]
       main = rapira:main
+      [console_scripts]
+      initialize_rapira_db = rapira.scripts.initializedb:main
       """,
       )

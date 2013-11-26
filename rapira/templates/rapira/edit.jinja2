@@ -1,0 +1,10 @@
+{% extends "rapira/common/base.jinja2" %}
+
+{% block content %}
+
+    <form action="{{ save_url }}" method="post">
+      <textarea name="body" rows="10" cols="60">{{ page.data }}</textarea><br/>
+      <input type="submit" name="form.submitted" value="Save"/>
+    </form>
+
+{% endblock content %}

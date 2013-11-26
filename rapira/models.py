@@ -1,16 +1,44 @@
 # -*- coding: utf-8 -*-
-from persistent import Persistent
-from persistent.mapping import PersistentMapping
+from sqlalchemy import (
+    Column,
+    Index,
+    Integer,
+    Text,
+    )
 
+from sqlalchemy.ext.declarative import declarative_base
+
+from sqlalchemy.orm import (
+    scoped_session,
+    sessionmaker,
+    )
+
+from zope.sqlalchemy import ZopeTransactionExtension
+
+DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
+Base = declarative_base()
 
 from pyramid.security import (Allow, Everyone,)
 
 
-class AppDataStore(PersistentMapping):
+class AppDataStore(dict):
     __parent__ = __name__ = None
 
 
-class WikiContainer(dict):
+class WikiPage(Base):
+    __tablename__ = 'wiki_page'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, unique=True)
+    data = Column(Text)
+
+    def __init__(self, name, data):
+        self.name = name
+        self.__name__ = name
+        self.data = data
+
+
+class WikiContainer(object):
     __parent__ = None
     __name__ = "wiki"
     __acl__ = [(Allow, Everyone, 'view'),
@@ -19,13 +47,20 @@ class WikiContainer(dict):
     def __init__(self, parent):
         self.__parent__ = parent
 
+    def __getitem__(self, pagename):
+        page = DBSession.query(WikiPage).filter_by(name=pagename).first()
+        if page is None:
+            raise KeyError
 
-class WikiPage(Persistent):
-    def __init__(self, data):
-        self.data = data
+        page.__name__ = page.name
+        page.__parent__ = self
 
+        return page
 
-class EquipmentContainer(dict):
+    def __setitem__(self, key, value):
+        DBSession.add(value)
+
+class EquipmentContainer(object):
     __parent__ = None
     __name__ = u'оборудование'
 
@@ -33,39 +68,28 @@ class EquipmentContainer(dict):
         self.__parent__ = parent
 
 
-class EquipmentType(Persistent):
-    def __init__(self, name, parent):
-        self.name = name
-        self.__name__ = name
-        self.__parent__ = parent
+#class EquipmentType(Persistent):
+#    def __init__(self, name, parent):
+#        self.name = name
+#        self.__name__ = name
+#        self.__parent__ = parent
+#
+#class EquipmentItem(Persistent):
+#    def __init__(self, serial_number, equipment_type, parent):
+#        self.__name__ = self.serial_number = serial_number
+#        self.type = equipment_type
+#        self.__parent__ = parent
 
-class EquipmentItem(Persistent):
-    def __init__(self, serial_number, equipment_type, parent):
-        self.__name__ = self.serial_number = serial_number
-        self.type = equipment_type
-        self.__parent__ = parent
+def resource_tree_factory():
+    app_root = AppDataStore()
 
-def appmaker(zodb_root):
-    if not 'app_root' in zodb_root:
-        app_root = AppDataStore()
+    wiki_section = WikiContainer(app_root)
+    app_root[wiki_section.__name__] = wiki_section
 
-        wiki_root = WikiContainer(app_root)
-        frontpage = WikiPage(u'Это начальная страница.')
-        wiki_root['frontpage'] = frontpage
-        frontpage.__name__ = 'frontpage'
-        frontpage.__parent__ = wiki_root
-        app_root[wiki_root.__name__] = wiki_root
+    equipment_section = EquipmentContainer(app_root)
+    app_root[equipment_section.__name__] = equipment_section
 
-        eqiupment_root = EquipmentContainer(app_root)
-        eq_type = EquipmentType(u'весы', eqiupment_root)
-        eqiupment_root[eq_type.__name__] = eq_type
-        item = EquipmentItem('12345', eq_type, eqiupment_root)
-        eqiupment_root[item.__name__] = item
-        app_root[eqiupment_root.__name__] = eqiupment_root
+    import transaction
+    transaction.commit()
 
-        zodb_root['app_root'] = app_root
-
-        import transaction
-        transaction.commit()
-
-    return zodb_root['app_root']
+    return app_root

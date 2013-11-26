@@ -44,7 +44,7 @@ def logout(request):
     return HTTPFound(location = request.resource_url(request.context), headers = headers)
 
 @view_config(context='.models.AppDataStore')
-def view_wiki(context, request):
+def view_index(context, request):
     return HTTPFound(location=request.resource_url(context, 'wiki'))
 
 # regular expression used to find WikiWords
@@ -78,19 +78,19 @@ def add_page(context, request):
     pagename = request.subpath[0]
     if 'form.submitted' in request.params:
         body = request.params['body']
-        page = WikiPage(body)
+        page = WikiPage(pagename, body)
         page.__name__ = pagename
         page.__parent__ = context
         context[pagename] = page
         return HTTPFound(location = request.resource_url(page))
     save_url = request.resource_url(context, 'add_page', pagename)
-    page = WikiPage('')
+    page = WikiPage('', '')
     page.__name__ = pagename
     page.__parent__ = context
     return dict(page = page, save_url = save_url, logged_in = authenticated_userid(request))
 
 @view_config(name='edit_page', context='.models.WikiPage',
-             renderer='templates/edit.pt', permission='edit')
+             renderer='templates/rapira/edit.jinja2', permission='view')
 def edit_page(context, request):
     if 'form.submitted' in request.params:
         context.data = request.params['body']
