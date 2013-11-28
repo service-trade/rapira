@@ -31,6 +31,10 @@ def main(global_config, **settings):
     config.set_authorization_policy(authz_policy)
 
     config.add_static_view('static', 'static', cache_max_age=3600)
+
     config.scan()
+
+    #config.include('deform_jinja2')
+    config.include('deform_bootstrap_extra')
 
     return config.make_wsgi_app()

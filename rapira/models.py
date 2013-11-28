@@ -60,14 +60,53 @@ class WikiContainer(object):
     def __setitem__(self, key, value):
         DBSession.add(value)
 
-class EquipmentContainer(object):
+
+class LegalEntity(Base):
+    __tablename__ = 'legal_entity'
+
+    id = Column(Integer, primary_key=True)
+    title = Column(Text)
+    legal_title = Column(Text)
+    inn = Column(Integer, unique=True)
+    ogrn = Column(Integer, unique=True)
+
+    def __init__(self, title, inn, ogrn):
+        self.title = title
+        self.inn = inn
+        self.ogrn = ogrn
+
+class LegalEntitiesContainer(object):
     __parent__ = None
-    __name__ = u'оборудование'
+    __name__ = "юрлица"
+    __acl__ = [(Allow, Everyone, 'view'),
+               (Allow, 'group:editors', 'edit')]
 
     def __init__(self, parent):
         self.__parent__ = parent
 
+    def __getitem__(self, id):
+        entity = DBSession.query(LegalEntity).filter_by(id=id).first()
+        if entity is None:
+            raise KeyError
 
+        entity.__name__ = entity.id
+        entity.__parent__ = self
+
+        return entity
+
+    def __setitem__(self, key, value):
+        DBSession.add(value)
+
+
+
+#class EquipmentContainer(object):
+#    __parent__ = None
+#    __name__ = u'оборудование'
+#
+#    def __init__(self, parent):
+#        self.__parent__ = parent
+#
+#
 #class EquipmentType(Persistent):
 #    def __init__(self, name, parent):
 #        self.name = name
