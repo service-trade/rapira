@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="dataSourceStorage">
+  <data-source source="LOCAL" name="Rapira" product="MySQL" version="5.5.34-MariaDB-log" jdbc-version="4.0" driver-name="MySQL Connector Java" driver-version="mysql-connector-java-5.1.26 ( Revision: ${bzr.revision-id} )" uuid="41903b24-442d-4dfd-838b-85d82390d751">
+    <case-sensitivity plain-identifiers="exact" quoted-identifiers="exact"/>
+    <extra-name-characters>#@</extra-name-characters>
+    <identifier-quote-string>`</identifier-quote-string>
+    <synchronize>true</synchronize>
+    <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+    <jdbc-url>jdbc:mysql://localhost/rapira</jdbc-url>
+    <user-name>root</user-name>
+    <schema-pattern>rapira.*</schema-pattern>
+    <default-schemas>rapira.*</default-schemas>
+    <default-dialect>MySQL</default-dialect>
+    <libraries>
+      <library>
+        <url>jar://$USER_HOME$/Downloads/mysql-connector-java-5.1.26-bin.jar!/</url>
+      </library>
+      <library>
+        <url>file://$USER_HOME$/Downloads/mysql-connector-license.txt</url>
+      </library>
+    </libraries>
+    <schema name="" catalog="rapira"/>
+    <table name="client" schema="" catalog="rapira" type="TABLE">
+      <column name="type" sqlType="CHAR" length="4" precision="0" nullable="true" jdbcType="1"/>
+      <column name="id" sqlType="INT" length="10" precision="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="label_name" sqlType="VARCHAR" length="255" precision="0" nullable="false" jdbcType="12"/>
+      <column name="legal_title" sqlType="VARCHAR" length="255" precision="0" nullable="false" jdbcType="12"/>
+      <column name="contacts" sqlType="VARCHAR" length="255" precision="0" nullable="true" jdbcType="12"/>
+      <column name="bank_accounts" sqlType="VARCHAR" length="255" precision="0" nullable="true" jdbcType="12"/>
+      <column name="remarks" sqlType="TEXT" length="65535" precision="0" nullable="true" jdbcType="-1"/>
+      <column name="passport" sqlType="VARCHAR" length="255" precision="0" nullable="true" jdbcType="12"/>
+      <column name="INN" sqlType="INT" length="10" precision="0" nullable="true" jdbcType="4"/>
+      <column name="OGRN" sqlType="INT" length="10" precision="0" nullable="true" jdbcType="4"/>
+      <column name="KPP" sqlType="INT" length="10" precision="0" nullable="true" jdbcType="4"/>
+      <column name="legal_address" sqlType="VARCHAR" length="255" precision="0" nullable="true" jdbcType="12"/>
+      <primary-key name="PRIMARY" columns="id"/>
+      <index name="INN" unique="true" columns="INN"/>
+      <index name="KPP" unique="true" columns="KPP"/>
+      <index name="label_name" unique="true" columns="label_name"/>
+      <index name="OGRN" unique="true" columns="OGRN"/>
+    </table>
+    <table name="client_firm_facility" schema="" catalog="rapira" type="TABLE">
+      <column name="id" sqlType="INT" length="10" precision="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="name" sqlType="TEXT" length="65535" precision="0" nullable="true" jdbcType="-1"/>
+      <column name="address" sqlType="VARCHAR" length="255" precision="0" nullable="true" jdbcType="12"/>
+      <primary-key name="PRIMARY" columns="id"/>
+    </table>
+    <table name="wiki_page" schema="" catalog="rapira" type="TABLE">
+      <column name="id" sqlType="INT" length="10" precision="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="name" sqlType="VARCHAR" length="255" precision="0" nullable="true" jdbcType="12"/>
+      <column name="data" sqlType="TEXT" length="65535" precision="0" nullable="true" jdbcType="-1"/>
+      <primary-key name="PRIMARY" columns="id"/>
+      <index name="name" unique="true" columns="name"/>
+    </table>
+  </data-source>
+</component>

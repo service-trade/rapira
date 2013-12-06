@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" hash="1005656517">
+    <data-source source="LOCAL" name="Rapira" uuid="41903b24-442d-4dfd-838b-85d82390d751">
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost/rapira</jdbc-url>
+      <user-name>root</user-name>
+      <schema-pattern>rapira.*</schema-pattern>
+      <default-schemas>rapira.*</default-schemas>
+      <default-dialect>MySQL</default-dialect>
+      <libraries>
+        <library>
+          <url>jar://$USER_HOME$/Downloads/mysql-connector-java-5.1.26-bin.jar!/</url>
+        </library>
+        <library>
+          <url>file://$USER_HOME$/Downloads/mysql-connector-license.txt</url>
+        </library>
+      </libraries>
+    </data-source>
+  </component>
+</project>
+
