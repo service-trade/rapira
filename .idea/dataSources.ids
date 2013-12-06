@@ -20,6 +20,9 @@
       </library>
     </libraries>
     <schema name="" catalog="rapira"/>
+    <table name="alembic_version" schema="" catalog="rapira" type="TABLE">
+      <column name="version_num" sqlType="VARCHAR" length="32" precision="0" nullable="false" jdbcType="12"/>
+    </table>
     <table name="client" schema="" catalog="rapira" type="TABLE">
       <column name="type" sqlType="CHAR" length="4" precision="0" nullable="true" jdbcType="1"/>
       <column name="id" sqlType="INT" length="10" precision="0" nullable="false" jdbcType="4" autoIncrement="true"/>
@@ -34,6 +37,7 @@
       <column name="KPP" sqlType="INT" length="10" precision="0" nullable="true" jdbcType="4"/>
       <column name="legal_address" sqlType="VARCHAR" length="255" precision="0" nullable="true" jdbcType="12"/>
       <primary-key name="PRIMARY" columns="id"/>
+      <exported-key name="nn_client_firm2facility_ibfk_2" table="nn_client_firm2facility" schema="" catalog="rapira" columns="client_firm_id"/>
       <index name="INN" unique="true" columns="INN"/>
       <index name="KPP" unique="true" columns="KPP"/>
       <index name="label_name" unique="true" columns="label_name"/>
@@ -44,6 +48,14 @@
       <column name="name" sqlType="TEXT" length="65535" precision="0" nullable="true" jdbcType="-1"/>
       <column name="address" sqlType="VARCHAR" length="255" precision="0" nullable="true" jdbcType="12"/>
       <primary-key name="PRIMARY" columns="id"/>
+      <exported-key name="nn_client_firm2facility_ibfk_1" table="nn_client_firm2facility" schema="" catalog="rapira" columns="client_firm_facility_id"/>
+    </table>
+    <table name="nn_client_firm2facility" schema="" catalog="rapira" type="TABLE">
+      <column name="client_firm_id" sqlType="INT" length="10" precision="0" nullable="false" jdbcType="4" def="MA=="/>
+      <column name="client_firm_facility_id" sqlType="INT" length="10" precision="0" nullable="false" jdbcType="4" def="MA=="/>
+      <primary-key name="PRIMARY" columns="client_firm_id,client_firm_facility_id"/>
+      <foreign-key name="nn_client_firm2facility_ibfk_1" columns="client_firm_facility_id" ref-table="client_firm_facility" ref-schema="" ref-catalog="rapira" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
+      <foreign-key name="nn_client_firm2facility_ibfk_2" columns="client_firm_id" ref-table="client" ref-schema="" ref-catalog="rapira" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
     </table>
     <table name="wiki_page" schema="" catalog="rapira" type="TABLE">
       <column name="id" sqlType="INT" length="10" precision="0" nullable="false" jdbcType="4" autoIncrement="true"/>

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from sqlalchemy import (
+    Table,
     Column,
+    PrimaryKeyConstraint,
+    ForeignKey,
     Index,
     Integer,
     String,
@@ -13,6 +16,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import (
     scoped_session,
     sessionmaker,
+    relationship,
+    backref,
     )
 
 from zope.sqlalchemy import ZopeTransactionExtension
@@ -90,12 +95,30 @@ class ClientPerson(Client):
 
 
 ###############################################################################
+# Таблица сопоставления многие-ко-многим между фирмами и точками фирм.
+nn_client_firm2facility_table = Table(
+    'nn_client_firm2facility',
+    Base.metadata,
+
+    Column('client_firm_id',
+           Integer,
+           ForeignKey('client.id')),
+    Column('client_firm_facility_id',
+           Integer,
+           ForeignKey('client_firm_facility.id')),
+    PrimaryKeyConstraint('client_firm_id', 'client_firm_facility_id'),
+)
+
+###############################################################################
 # Модель для заказчика-ИП или юрлица.
 class ClientFirm(Client):
     INN           = Column(Integer, unique=True)
     OGRN          = Column(Integer, unique=True)
     KPP           = Column(Integer, unique=True)
     legal_address = Column(String(255))
+    facilities    = relationship('ClientFirmFacility',
+                                 secondary='nn_client_firm2facility',
+                                 backref="firms")
 
     __mapper_args__ = {'polymorphic_identity': 'FIRM'}
 
@@ -134,6 +157,15 @@ class ClientFirmFacility(Base):
     name = Column(Text)
     address = Column(String(255))
 
+
+#class nn_client_firm2facility(Base):
+#    __tablename__ = 'nn_client_firm2facility'
+#
+#    id = Column(Integer, primary_key=True)
+#    client_firm_id = Column(Integer, ForeignKey('client.id'))
+#    client_firm_facility_id = Column(
+#        Integer, ForeignKey('client_firm_facility.id')
+#    )
 
 ###############################################################################
 # Контейнер для точек фирм-заказчиков.
