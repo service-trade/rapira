@@ -3,7 +3,9 @@ from sqlalchemy import (
     Column,
     Index,
     Integer,
+    String,
     Text,
+    CHAR,
     )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -21,23 +23,24 @@ Base = declarative_base()
 from pyramid.security import (Allow, Everyone,)
 
 
+###############################################################################
+# Кореневой контейнер дерева ресурсов
 class AppDataStore(dict):
     __parent__ = __name__ = None
 
 
+###############################################################################
+# Модель вики-страницы
 class WikiPage(Base):
     __tablename__ = 'wiki_page'
 
-    id = Column(Integer, primary_key=True)
-    name = Column(Text, unique=True)
+    id   = Column(Integer,     primary_key=True)
+    name = Column(String(255), unique=True)
     data = Column(Text)
 
-    def __init__(self, name, data):
-        self.name = name
-        self.__name__ = name
-        self.data = data
 
-
+###############################################################################
+# Контейнер для вики-страниц
 class WikiContainer(object):
     __parent__ = None
     __name__ = "wiki"
@@ -52,7 +55,7 @@ class WikiContainer(object):
         if page is None:
             raise KeyError
 
-        page.__name__ = page.name
+        page.__name__   = page.name
         page.__parent__ = self
 
         return page
@@ -61,23 +64,47 @@ class WikiContainer(object):
         DBSession.add(value)
 
 
-class LegalEntity(Base):
-    __tablename__ = 'legal_entity'
+###############################################################################
+# Базовая модель заказчика
+class Client(Base):
+    __tablename__ = 'client'
 
-    id = Column(Integer, primary_key=True)
-    title = Column(Text)
-    legal_title = Column(Text)
-    inn = Column(Integer, unique=True)
-    ogrn = Column(Integer, unique=True)
+    discriminator = Column('type', CHAR(4))
 
-    def __init__(self, title, inn, ogrn):
-        self.title = title
-        self.inn = inn
-        self.ogrn = ogrn
+    id            = Column(Integer,     primary_key=True)
+    label_name    = Column(String(255), unique=True, nullable=False)
+    legal_title   = Column(String(255), nullable=False)
+    contacts      = Column(String(255))
+    bank_accounts = Column(String(255))
+    remarks       = Column(Text)
 
-class LegalEntitiesContainer(object):
+    __mapper_args__ = {'polymorphic_on': discriminator}
+
+
+###############################################################################
+# Модель для заказчика-физлица.
+class ClientPerson(Client):
+    passport = Column(String(255))
+
+    __mapper_args__ = {'polymorphic_identity': 'PRSN'}
+
+
+###############################################################################
+# Модель для заказчика-ИП или юрлица.
+class ClientFirm(Client):
+    INN           = Column(Integer, unique=True)
+    OGRN          = Column(Integer, unique=True)
+    KPP           = Column(Integer, unique=True)
+    legal_address = Column(String(255))
+
+    __mapper_args__ = {'polymorphic_identity': 'FIRM'}
+
+
+###############################################################################
+# Контейнер для заказчиков.
+class ClientContainer(object):
     __parent__ = None
-    __name__ = "юрлица"
+    __name__ = "клиенты"
     __acl__ = [(Allow, Everyone, 'view'),
                (Allow, 'group:editors', 'edit')]
 
@@ -85,7 +112,7 @@ class LegalEntitiesContainer(object):
         self.__parent__ = parent
 
     def __getitem__(self, id):
-        entity = DBSession.query(LegalEntity).filter_by(id=id).first()
+        entity = DBSession.query(Client).filter_by(id=id).first()
         if entity is None:
             raise KeyError
 
@@ -98,26 +125,40 @@ class LegalEntitiesContainer(object):
         DBSession.add(value)
 
 
+###############################################################################
+# Модель для точки (объекта) фирмы-заказчика.
+class ClientFirmFacility(Base):
+    __tablename__ = 'client_firm_facility'
 
-#class EquipmentContainer(object):
-#    __parent__ = None
-#    __name__ = u'оборудование'
-#
-#    def __init__(self, parent):
-#        self.__parent__ = parent
-#
-#
-#class EquipmentType(Persistent):
-#    def __init__(self, name, parent):
-#        self.name = name
-#        self.__name__ = name
-#        self.__parent__ = parent
-#
-#class EquipmentItem(Persistent):
-#    def __init__(self, serial_number, equipment_type, parent):
-#        self.__name__ = self.serial_number = serial_number
-#        self.type = equipment_type
-#        self.__parent__ = parent
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    address = Column(String(255))
+
+
+###############################################################################
+# Контейнер для точек фирм-заказчиков.
+class ClientFirmFacilityContainer(object):
+    __parent__ = None
+    __name__ = "точки"
+    __acl__ = [(Allow, Everyone, 'view'),
+               (Allow, 'group:editors', 'edit')]
+
+    def __init__(self, parent):
+        self.__parent__ = parent
+
+    def __getitem__(self, id):
+        entity = DBSession.query(ClientFirmFacility).filter_by(id=id).first()
+        if entity is None:
+            raise KeyError
+
+        entity.__name__ = entity.id
+        entity.__parent__ = self
+
+        return entity
+
+    def __setitem__(self, key, value):
+        DBSession.add(value)
+
 
 def resource_tree_factory():
     app_root = AppDataStore()
@@ -125,8 +166,11 @@ def resource_tree_factory():
     wiki_section = WikiContainer(app_root)
     app_root[wiki_section.__name__] = wiki_section
 
-    equipment_section = EquipmentContainer(app_root)
-    app_root[equipment_section.__name__] = equipment_section
+    client_section = ClientContainer(app_root)
+    app_root[client_section.__name__] = client_section
+
+    facility_section = ClientFirmFacilityContainer(app_root)
+    app_root[facility_section.__name__] = facility_section
 
     import transaction
     transaction.commit()
