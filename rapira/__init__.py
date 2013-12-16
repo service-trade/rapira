@@ -16,14 +16,16 @@ from .security import groupfinder
 def root_factory(request):
     return resource_tree_factory()
 
+def configure_db_engine(settings):
+    engine = engine_from_config(settings, 'sqlalchemy.')
+    DBSession.configure(bind=engine)
+    Base.metadata.bind = engine
 
 def main(global_config, **settings):
     authn_policy = AuthTktAuthenticationPolicy('sosecret', callback=groupfinder, hashalg='sha512')
     authz_policy = ACLAuthorizationPolicy()
 
-    engine = engine_from_config(settings, 'sqlalchemy.')
-    DBSession.configure(bind=engine)
-    Base.metadata.bind = engine
+    configure_db_engine(settings)
 
     config = Configurator(root_factory=root_factory, settings=settings)
 
@@ -35,6 +37,6 @@ def main(global_config, **settings):
     config.scan()
 
     #config.include('deform_jinja2')
-    config.include('deform_bootstrap_extra')
+    #config.include('deform_bootstrap_extra')
 
     return config.make_wsgi_app()

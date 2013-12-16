@@ -8,8 +8,10 @@
 {% endblock head_css %}
 
 {% block content %}
-    {{ message }}
-    {{ login_form|safe }}
+    <div class="container">
+        {{ message }}
+        {{ login_form|safe }}
+    </div>
 {% endblock content %}
 
 {% block body_js %}

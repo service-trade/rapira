@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DataSourceManagerImpl" format="xml" hash="3879476323">
-    <data-source source="LOCAL" name="Rapira" uuid="41903b24-442d-4dfd-838b-85d82390d751">
+  <component name="DataSourceManagerImpl" format="xml" hash="3007261010">
+    <data-source source="LOCAL" name="Rapira - mySQL" uuid="41903b24-442d-4dfd-838b-85d82390d751">
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://localhost/rapira</jdbc-url>
@@ -15,6 +15,22 @@
         </library>
         <library>
           <url>file://$USER_HOME$/Downloads/mysql-connector-license.txt</url>
+        </library>
+      </libraries>
+    </data-source>
+    <data-source source="LOCAL" name="Rapira - PGSQL" uuid="67f06776-61ef-4c58-be2e-28d23284f880">
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql:rapira</jdbc-url>
+      <user-name>lial</user-name>
+      <schema-pattern>rapira.*</schema-pattern>
+      <default-schemas>rapira.*</default-schemas>
+      <libraries>
+        <library>
+          <url>jar://$USER_HOME$/Downloads/postgresql-9.2-1002.jdbc4.jar!/</url>
+        </library>
+        <library>
+          <url>file://$USER_HOME$/Downloads/postgresql-driver-license.txt</url>
         </library>
       </libraries>
     </data-source>

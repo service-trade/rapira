@@ -1,40 +1,78 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy import (
-    Table,
-    Column,
-    PrimaryKeyConstraint,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    Text,
-    CHAR,
-    )
-
+from sqlalchemy import (CHAR, Column, ForeignKey, Index, Integer, PrimaryKeyConstraint, String, Table, Text,)
 from sqlalchemy.ext.declarative import declarative_base
-
-from sqlalchemy.orm import (
-    scoped_session,
-    sessionmaker,
-    relationship,
-    backref,
-    )
-
+from sqlalchemy.orm import (backref, relationship, scoped_session, sessionmaker,)
 from zope.sqlalchemy import ZopeTransactionExtension
+from pyramid.security import (Allow, Everyone,)
+
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
-from pyramid.security import (Allow, Everyone,)
 
-
-###############################################################################
+##############################################################################
 # Кореневой контейнер дерева ресурсов
 class AppDataStore(dict):
     __parent__ = __name__ = None
 
 
-###############################################################################
+##############################################################################
+# Таблица сопоставления многие-ко-многим между ярлыками.
+nn_tag2tag_table = Table(
+    'nn_tag2tag',
+    Base.metadata,
+
+    Column('parent_id',
+           Integer,
+           ForeignKey('tag.id'), nullable=False),
+    Column('child_id',
+           Integer,
+           ForeignKey('tag.id'), nullable=False),
+
+    PrimaryKeyConstraint('parent_id', 'child_id'),
+)
+
+
+##############################################################################
+# Модель для ярлыков
+class Tag(Base):
+    __tablename__ = 'tag'
+
+    id       = Column(Integer, primary_key=True)
+    name     = Column(String(255), unique=True)
+    children = relationship('Tag',
+                            secondary     = 'nn_tag2tag',
+                            backref       = 'parents',
+                            primaryjoin   = id==nn_tag2tag_table.c.parent_id,
+                            secondaryjoin = id==nn_tag2tag_table.c.child_id,)
+
+
+##############################################################################
+# Контейнер для тэгов.
+class TagContainer(object):
+    __parent__ = None
+    __name__ = u"каталог-ярлыков"
+    __acl__ = [(Allow, Everyone, 'view'),
+               (Allow, 'group:editors', 'edit')]
+
+    def __init__(self, parent):
+        self.__parent__ = parent
+
+    def __getitem__(self, id):
+        entity = DBSession.query(Tag).filter_by(id=id).first()
+        if entity is None:
+            raise KeyError
+
+        entity.__name__ = entity.id
+        entity.__parent__ = self
+
+        return entity
+
+    def __setitem__(self, key, value):
+        DBSession.add(value)
+
+
+##############################################################################
 # Модель вики-страницы
 class WikiPage(Base):
     __tablename__ = 'wiki_page'
@@ -44,7 +82,7 @@ class WikiPage(Base):
     data = Column(Text)
 
 
-###############################################################################
+##############################################################################
 # Контейнер для вики-страниц
 class WikiContainer(object):
     __parent__ = None
@@ -69,7 +107,7 @@ class WikiContainer(object):
         DBSession.add(value)
 
 
-###############################################################################
+##############################################################################
 # Базовая модель заказчика
 class Client(Base):
     __tablename__ = 'client'
@@ -86,7 +124,7 @@ class Client(Base):
     __mapper_args__ = {'polymorphic_on': discriminator}
 
 
-###############################################################################
+##############################################################################
 # Модель для заказчика-физлица.
 class ClientPerson(Client):
     passport = Column(String(255))
@@ -94,7 +132,7 @@ class ClientPerson(Client):
     __mapper_args__ = {'polymorphic_identity': 'PRSN'}
 
 
-###############################################################################
+##############################################################################
 # Таблица сопоставления многие-ко-многим между фирмами и точками фирм.
 nn_client_firm2facility_table = Table(
     'nn_client_firm2facility',
@@ -102,14 +140,14 @@ nn_client_firm2facility_table = Table(
 
     Column('client_firm_id',
            Integer,
-           ForeignKey('client.id')),
+           ForeignKey('client.id'), nullable=False),
     Column('client_firm_facility_id',
            Integer,
-           ForeignKey('client_firm_facility.id')),
+           ForeignKey('client_firm_facility.id'), nullable=False),
     PrimaryKeyConstraint('client_firm_id', 'client_firm_facility_id'),
 )
 
-###############################################################################
+##############################################################################
 # Модель для заказчика-ИП или юрлица.
 class ClientFirm(Client):
     INN           = Column(Integer, unique=True)
@@ -123,7 +161,7 @@ class ClientFirm(Client):
     __mapper_args__ = {'polymorphic_identity': 'FIRM'}
 
 
-###############################################################################
+######################№#######################################################
 # Контейнер для заказчиков.
 class ClientContainer(object):
     __parent__ = None
@@ -148,7 +186,7 @@ class ClientContainer(object):
         DBSession.add(value)
 
 
-###############################################################################
+##############################################################################
 # Модель для точки (объекта) фирмы-заказчика.
 class ClientFirmFacility(Base):
     __tablename__ = 'client_firm_facility'
@@ -158,16 +196,7 @@ class ClientFirmFacility(Base):
     address = Column(String(255))
 
 
-#class nn_client_firm2facility(Base):
-#    __tablename__ = 'nn_client_firm2facility'
-#
-#    id = Column(Integer, primary_key=True)
-#    client_firm_id = Column(Integer, ForeignKey('client.id'))
-#    client_firm_facility_id = Column(
-#        Integer, ForeignKey('client_firm_facility.id')
-#    )
-
-###############################################################################
+#######################№№#####################################################
 # Контейнер для точек фирм-заказчиков.
 class ClientFirmFacilityContainer(object):
     __parent__ = None
@@ -194,6 +223,9 @@ class ClientFirmFacilityContainer(object):
 
 def resource_tree_factory():
     app_root = AppDataStore()
+
+    tags_section = TagContainer(app_root)
+    app_root[tags_section.__name__] = tags_section
 
     wiki_section = WikiContainer(app_root)
     app_root[wiki_section.__name__] = wiki_section
