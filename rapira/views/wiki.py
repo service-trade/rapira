@@ -41,11 +41,11 @@ def view_wiki_page(context, request):
     return dict(page = context, content = content, edit_url = edit_url,
                 logged_in = authenticated_userid(request))
 
-@view_config(name='add_page',
+@view_config(name='add',
              context='rapira.models.WikiContainer',
              renderer='templates/rapira/wiki/edit.jinja2',
              permission='edit')
-def add_page(context, request):
+def add_wiki_page(context, request):
     pagename = request.subpath[0]
     if 'form.submitted' in request.params:
         body = request.params['body']
@@ -61,11 +61,11 @@ def add_page(context, request):
     return dict(page = page, save_url = save_url,
                 logged_in = authenticated_userid(request))
 
-@view_config(name='edit_page',
+@view_config(name='edit',
              context='rapira.models.WikiPage',
              renderer='templates/rapira/wiki/edit.jinja2',
              permission='edit')
-def edit_page(context, request):
+def edit_wiki_page(context, request):
     if 'form.submitted' in request.params:
         context.data = request.params['body']
         return HTTPFound(location = request.resource_url(context))

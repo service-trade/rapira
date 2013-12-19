@@ -2,6 +2,7 @@
 from sqlalchemy import (CHAR, Column, ForeignKey, Index, Integer, PrimaryKeyConstraint, String, Table, Text,)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import (backref, relationship, scoped_session, sessionmaker,)
+from sqlalchemy.exc import DataError
 from zope.sqlalchemy import ZopeTransactionExtension
 from pyramid.security import (Allow, Everyone,)
 
@@ -58,10 +59,14 @@ class TagContainer(object):
     def __init__(self, parent):
         self.__parent__ = parent
 
-    def __getitem__(self, id):
-        entity = DBSession.query(Tag).filter_by(id=id).first()
-        if entity is None:
+    def __getitem__(self, key):
+        try:
+            key = int(key)
+        except ValueError:
             raise KeyError
+
+        entity = DBSession.query(Tag).filter_by(id=key).first()
+        if entity is None: raise KeyError
 
         entity.__name__ = entity.id
         entity.__parent__ = self
